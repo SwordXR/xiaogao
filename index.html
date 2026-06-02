@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>琉雀协议：赛博飞升</title>
+    <style>
+        /* =======================================================================
+           全局物理层与赛博朋克变量
+           ======================================================================= */
+        :root {
+            --neon-green: #00FFAA;
+            --neon-purple: #B026FF;
+            --neon-cyan: #00E5FF;
+            --sys-red: #FF003C;
+            --bg-void: #050508;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        
+        body, html {
+            width: 100vw; height: 100vh; background-color: var(--bg-void);
+            overflow: hidden; font-family: 'Courier New', Courier, monospace;
+            perspective: 1000px;
+        }
+
+        /* =======================================================================
+           后期处理：CRT 显像管与噪点滤镜
+           ======================================================================= */
+        #post-processing {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+        /* 屏幕边缘暗角与微弱色差 */
+        #post-processing::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 50%, #000 120%);
+            mix-blend-mode: multiply;
+        }
+
+        /* =======================================================================
+           WebGL 隧道层 (Shader Render) 与 粒子画布层
+           ======================================================================= */
+        #webgl-tunnel { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0; transition: opacity 2s ease-in; }
+        #particle-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; mix-blend-mode: screen; filter: drop-shadow(0 0 15px var(--neon-purple)); }
+
+        /* =======================================================================
+           UI 层：时间线多段式容器
+           ======================================================================= */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transform-style: preserve-3d; }
+
+        /* --- 启动按钮 --- */
+        #init-btn {
+            padding: 15px 40px; border: 1px solid var(--neon-green); background: rgba(0, 255, 170, 0.1);
+            color: var(--neon-green); font-size: 1.2rem; cursor: pointer; letter-spacing: 4px;
+            text-transform: uppercase; box-shadow: 0 0 20px rgba(0, 255, 170, 0.2);
+            transition: all 0.2s; position: absolute; z-index: 200;
+        }
+        #init-btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 40px var(--neon-green); }
+
+        /* --- 阶段一：终端协议 --- */
+        #terminal-text {
+            color: var(--neon-green); font-size: 1.2rem; text-shadow: 0 0 10px var(--neon-green);
+            position: absolute; top: 40%; left: 10%; opacity: 0; font-family: monospace;
+        }
+        .cursor { display: inline-block; width: 10px; height: 1.2rem; background: var(--neon-green); animation: blink 0.8s infinite; }
+
+        /* --- 阶段三：主标题与呼吸泛光 --- */
+        #main-title {
+            position: absolute; text-align: center; font-size: 6rem; font-weight: 900;
+            font-family: 'Arial Black', Impact, sans-serif; letter-spacing: 10px;
+            color: #fff; text-transform: uppercase; white-space: nowrap;
+            /* 赛博朋克极高泛光 */
+            text-shadow: 
+                0 0 10px #fff, 0 0 20px #fff, 
+                0 0 40px var(--neon-cyan), 0 0 80px var(--neon-cyan), 
+                0 0 120px var(--neon-purple), 0 0 160px var(--neon-purple);
+            opacity: 0; transform: translateZ(100px) scale(0.8); pointer-events: none;
+        }
+
+        /* --- 阶段四：解码副标题 --- */
+        #subtitle-box {
+            position: absolute; top: calc(50% + 80px); padding: 10px 20px;
+            background: rgba(0,0,0,0.8); border-left: 4px solid var(--neon-green);
+            opacity: 0; transform: translateZ(50px); pointer-events: none;
+        }
+        #subtitle {
+            color: var(--neon-green); font-size: 1.5rem; letter-spacing: 8px; font-weight: bold;
+            text-shadow: 0 0 15px var(--neon-green); font-family: monospace;
+        }
+
+        /* =======================================================================
+           关键帧动画库
+           ======================================================================= */
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+        
+        .glitch-anim { animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite; }
+        @keyframes glitch-skew {
+            0% { transform: skew(0deg); }
+            20% { transform: skew(-20deg); filter: hue-rotate(90deg); }
+            40% { transform: skew(20deg); filter: hue-rotate(-90deg); }
+            60% { transform: skew(0deg); }
+            80% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* 摄像机剧烈震动 */
+        .camera-shake { animation: shake-hard 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake-hard {
+            0%, 100% { transform: translate3d(0, 0, 0); }
+            10% { transform: translate3d(-20px, -20px, 0); }
+            20% { transform: translate3d(20px, 20px, 0); }
+            30% { transform: translate3d(-30px, 10px, 0); }
+            40% { transform: translate3d(30px, -10px, 0); }
+            50% { transform: translate3d(-10px, 30px, 0); }
+            60% { transform: translate3d(10px, -30px, 0); }
+        }
+
+        /* 终极环境呼吸态 (Parallax Container) */
+        #breathing-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            transform-style: preserve-3d; transition: transform 0.1s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- WebGL 无尽网络隧道 -->
+    <canvas id="webgl-tunnel"></canvas>
+    
+    <!-- Canvas 粒子重组物理引擎 -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- UI 与 电影调度层 -->
+    <div id="ui-layer">
+        <button id="init-btn">[ INITIATE VANTAGE_PROTOCOL ]</button>
+        
+        <div id="terminal-text"><span id="typewriter"></span><span class="cursor"></span></div>
+
+        <div id="breathing-container">
+            <!-- 视觉核爆主体文字 -->
+            <div id="main-title">skka小高</div>
+            <!-- 副标题解码区 -->
+            <div id="subtitle-box">
+                <div id="subtitle"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 电影级后期系统 -->
+    <div id="post-processing"></div>
+
+    <script>
+        /**
+         * =======================================================================
+         * [ 第一模块 ] 纯代码电影级音频合成器 (AudioEngine)
+         * - 不依赖外链，纯数学公式生成 15 秒史诗配乐与音效
+         * =======================================================================
+         */
+        const AudioEngine = {
+            ctx: new (window.AudioContext || window.webkitAudioContext)(),
+            masterGain: null,
+            init: function() {
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.connect(this.ctx.destination);
+                this.masterGain.gain.value = 0.8;
+            },
+            // 单调冰冷的键盘打字声
+            playType: function() {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square'; osc.frequency.setValueAtTime(800 + Math.random()*400, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain); gain.connect(this.masterGain);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+            },
+            // 空间跃迁爬升音效 (3s - 6s Riser)
+            playRiser: function(duration) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(50, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + duration); // 音调急剧爬升
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + duration - 0.2);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + duration);
+                osc.connect(gain); gain.connect(this.masterGain);
+                osc.start(); osc.stop(this.ctx.currentTime + duration);
+            },
+            // 核爆重低音轰炸 (Bass Drop)
+            playBassDrop: function() {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 2); // 极低频下潜
+                gain.gain.setValueAtTime(2.0, this.ctx.currentTime); // 超高音量
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 3);
+                // 增加失真器增加暴力感
+                const distortion = this.ctx.createWaveShaper();
+                distortion.curve = this.makeDistortionCurve(400);
+                osc.connect(distortion); distortion.connect(gain); gain.connect(this.masterGain);
+                osc.start(); osc.stop(this.ctx.currentTime + 3);
+            },
+            // 玻璃碎裂/重组吸入声
+            playReverseShatter: function() {
+                const bufferSize = this.ctx.sampleRate * 1.5;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1; // 白噪声
+                const noise = this.ctx.createBufferSource(); noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter(); filter.type = 'highpass';
+                filter.frequency.setValueAtTime(5000, this.ctx.currentTime); // 高频刺耳
+                filter.frequency.linearRampToValueAtTime(500, this.ctx.currentTime + 1.5); // 吸入感
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(1.0, this.ctx.currentTime + 1.4);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 1.5);
+                noise.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
+                noise.start();
+            },
+            // 赛博环境底音 (Ambient Drone - 永续呼吸态)
+            playAmbientDrone: function() {
+                const osc1 = this.ctx.createOscillator(); const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc1.type = 'sine'; osc2.type = 'triangle';
+                osc1.frequency.value = 55; osc2.frequency.value = 55.5; // 产生低频拍音(Beat)
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + 5); // 缓慢淡入
+                osc1.connect(gain); osc2.connect(gain); gain.connect(this.masterGain);
+                osc1.start(); osc2.start();
+            },
+            makeDistortionCurve: function(amount) {
+                let k = typeof amount === 'number' ? amount : 50, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180, i = 0, x;
+                for ( ; i < n_samples; ++i ) { x = i * 2 / n_samples - 1; curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) ); }
+                return curve;
+            }
+        };
+
+        /**
+         * =======================================================================
+         * [ 第二模块 ] WebGL 赛博朋克深空隧道引擎 (Background Shader)
+         * - 使用纯 WebGL API 编译与渲染 Fragment Shader
+         * =======================================================================
+         */
+        const WebGLTunnel = {
+            canvas: document.getElementById('webgl-tunnel'),
+            gl: null, program: null, timeLoc: null, resLoc: null, startTime: 0,
+            
+            // 顶点着色器 (全屏覆盖)
+            vsSource: `
+                attribute vec4 aVertexPosition;
+                void main() { gl_Position = aVertexPosition; }
+            `,
+            // 片段着色器：核心黑客空间隧道效果
+            fsSource: `
+                #ifdef GL_ES
+                precision highp float;
+                #endif
+                uniform float u_time;
+                uniform vec2 u_resolution;
+
+                void main(void) {
+                    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.y, u_resolution.x);
+                    
+                    // 转换到极坐标制造隧道感
+                    float a = atan(uv.y, uv.x);
+                    float r = length(uv);
+                    
+                    // 隧道推进速度与扭曲
+                    vec2 tunnelUV = vec2(0.5 / r + u_time * 1.5, a / 3.1415926);
+                    
+                    // 生成数字网格线
+                    float gridX = abs(fract(tunnelUV.x * 10.0) - 0.5) * 20.0;
+                    float gridY = abs(fract(tunnelUV.y * 10.0) - 0.5) * 20.0;
+                    float line = 1.0 - min(gridX, gridY);
+                    
+                    // 景深衰减 (深处变暗)
+                    float depthFade = r * 1.5;
+                    
+                    // 赛博朋克色彩混合 (紫色与青色)
+                    vec3 neonColor = vec3(0.0, 1.0, 0.66) * sin(tunnelUV.x * 2.0) + vec3(0.69, 0.15, 1.0) * cos(tunnelUV.y * 5.0);
+                    
+                    vec3 finalColor = neonColor * line * depthFade;
+                    
+                    // 增加背景数字星尘
+                    float dust = fract(sin(dot(tunnelUV, vec2(12.9898, 78.233))) * 43758.5453);
+                    finalColor += vec3(dust * 0.1) * depthFade;
+
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }
+            `,
+            init: function() {
+                this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+                this.resize(); window.addEventListener('resize', () => this.resize());
+                
+                const vs = this.gl.createShader(this.gl.VERTEX_SHADER);
+                this.gl.shaderSource(vs, this.vsSource); this.gl.compileShader(vs);
+                
+                const fs = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+                this.gl.shaderSource(fs, this.fsSource); this.gl.compileShader(fs);
+                
+                this.program = this.gl.createProgram();
+                this.gl.attachShader(this.program, vs); this.gl.attachShader(this.program, fs);
+                this.gl.linkProgram(this.program); this.gl.useProgram(this.program);
+                
+                const vertices = new Float32Array([-1.0, -1.0,  1.0, -1.0, -1.0,  1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0]);
+                const buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+                
+                const pos = this.gl.getAttribLocation(this.program, "aVertexPosition");
+                this.gl.enableVertexAttribArray(pos);
+                this.gl.vertexAttribPointer(pos, 2, this.gl.FLOAT, false, 0, 0);
+                
+                this.timeLoc = this.gl.getUniformLocation(this.program, "u_time");
+                this.resLoc = this.gl.getUniformLocation(this.program, "u_resolution");
+                this.startTime = Date.now();
+                this.render();
+            },
+            resize: function() {
+                this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            },
+            render: function() {
+                this.gl.uniform1f(this.timeLoc, (Date.now() - this.startTime) * 0.001);
+                this.gl.uniform2f(this.resLoc, this.canvas.width, this.canvas.height);
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+                requestAnimationFrame(() => this.render());
+            }
+        };
+
+        /**
+         * =======================================================================
+         * [ 第三模块 ] 百万粒子倒放重组物理引擎 (Reverse Shatter Engine)
+         * - 基于离屏 Canvas 提取文字像素，映射为具有物理缓动的发光粒子
+         * =======================================================================
+         */
+        const ParticleEngine = {
+            canvas: document.getElementById('particle-canvas'),
+            ctx: null, particles: [], isAssembling: false, animationId: null,
+            targetText: "skka小高",
+            init: function() {
+                this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+                this.resize(); window.addEventListener('resize', () => this.resize());
+            },
+            resize: function() {
+                this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight;
+            },
+            // 扫描并生成目标物理坐标
+            prepareShatter: function() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // 响应式巨型字体
+                const fontSize = Math.min(this.canvas.width / 5, 250); 
+                this.ctx.fillStyle = "#fff";
+                this.ctx.font = `900 ${fontSize}px 'Arial Black', Impact, sans-serif`;
+                this.ctx.textAlign = "center"; this.ctx.textBaseline = "middle";
+                this.ctx.fillText(this.targetText, this.canvas.width / 2, this.canvas.height / 2);
+
+                const imgData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.particles = [];
+                const step = 4; // 精度采样，越小粒子越多越炸裂，但考研GPU
+                for (let y = 0; y < imgData.height; y += step) {
+                    for (let x = 0; x < imgData.width; x += step) {
+                        const alpha = imgData.data[(y * imgData.width + x) * 4 + 3];
+                        if (alpha > 128) {
+                            // Target Position (最终汇聚位置)
+                            const tx = x; const ty = y;
+                            // Random Start Position (生成在屏幕极远处或深度Z轴，产生极强向心力)
+                            const angle = Math.random() * Math.PI * 2;
+                            const radius = Math.random() * 3000 + 1000;
+                            const sx = this.canvas.width/2 + Math.cos(angle) * radius;
+                            const sy = this.canvas.height/2 + Math.sin(angle) * radius;
+                            
+                            this.particles.push({
+                                sx: sx, sy: sy, tx: tx, ty: ty,
+                                x: sx, y: sy,
+                                size: Math.random() * 2.5 + 1.0,
+                                color: Math.random() > 0.5 ? '#00E5FF' : '#B026FF', // 青紫霓虹交织
+                                delay: Math.random() * 0.5 // 汇聚时间差
+                            });
+                        }
+                    }
+                }
+            },
+            // 开始倒放爆炸 (汇聚)
+            startAssemble: function(duration) {
+                this.isAssembling = true;
+                const startTime = Date.now();
+                
+                const render = () => {
+                    // Motion Blur 拖影层
+                    this.ctx.fillStyle = 'rgba(5, 5, 8, 0.3)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    const now = Date.now();
+                    const elapsed = (now - startTime) / 1000;
+                    let allArrived = true;
+
+                    // 极致渲染循环
+                    for (let i = 0; i < this.particles.length; i++) {
+                        const p = this.particles[i];
+                        if (elapsed > p.delay) {
+                            // 缓动函数 (Exponential Out/Spring) 打造机械吸入的暴力感
+                            let progress = (elapsed - p.delay) / (duration - p.delay);
+                            if (progress > 1) progress = 1; else allArrived = false;
+                            
+                            // 缓动插值算法
+                            const ease = 1 - Math.pow(1 - progress, 5);
+                            p.x = p.sx + (p.tx - p.sx) * ease;
+                            p.y = p.sy + (p.ty - p.sy) * ease;
+                            
+                            // 绘制极光粒子
+                            this.ctx.fillStyle = p.color;
+                            this.ctx.fillRect(p.x, p.y, p.size, p.size);
+                        }
+                    }
+
+                    if (!allArrived) {
+                        this.animationId = requestAnimationFrame(render);
+                    } else {
+                        // 汇聚完成后，清空画布，将显示权交给真实 DOM (为了无损的高清 Bloom 泛光)
+                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                        document.getElementById('main-title').style.opacity = 1;
+                    }
+                };
+                render();
+            }
+        };
+
+        /**
+         * =======================================================================
+         * [ 第四模块 ] UI 动画系统与乱码解码器
+         * =======================================================================
+         */
+        const GlitchDecoder = {
+            targetText: "尊敬的琉雀玩家",
+            element: document.getElementById('subtitle'),
+            chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*<>[]{}",
+            decode: function(duration) {
+                document.getElementById('subtitle-box').style.opacity = 1;
+                let iterations = 0;
+                const maxIterations = 30;
+                const interval = duration / maxIterations;
+                
+                const timer = setInterval(() => {
+                    let result = "";
+                    for(let i=0; i<this.targetText.length; i++) {
+                        if(i < iterations / (maxIterations / this.targetText.length)) {
+                            result += this.targetText[i];
+                        } else {
+                            result += this.chars[Math.floor(Math.random() * this.chars.length)];
+                        }
+                    }
+                    this.element.innerText = result;
+                    AudioEngine.playType(); // 伴随解码音
+                    
+                    iterations++;
+                    if(iterations > maxIterations) {
+                        clearInterval(timer);
+                        this.element.innerText = this.targetText;
+                        this.element.style.textShadow = "0 0 20px #00FFAA, 0 0 40px #00FFAA";
+                    }
+                }, interval);
+            }
+        };
+
+        /**
+         * =======================================================================
+         * [ 第五模块 ] The Cinematic Director (电影导演时间线系统)
+         * - 严格控制 0-15 秒的所有视听觉爆发点
+         * =======================================================================
+         */
+        const TimelineDirector = {
+            start: function() {
+                document.getElementById('init-btn').style.display = 'none';
+                AudioEngine.init();
+                
+                // --- [阶段一] 冷启动与入侵 (0s - 3s) ---
+                const termText = document.getElementById('terminal-text');
+                termText.style.opacity = 1;
+                const typeText = "> INITIATING PROTOCOL: VANTAGE_OVERRIDE...";
+                let typeIdx = 0;
+                const typeInterval = setInterval(() => {
+                    document.getElementById('typewriter').innerText += typeText[typeIdx];
+                    AudioEngine.playType();
+                    typeIdx++;
+                    if(typeIdx >= typeText.length) clearInterval(typeInterval);
+                }, 50);
+
+                // --- [阶段二] 维度撕裂与空间跃迁 (3s - 6s) ---
+                setTimeout(() => {
+                    termText.classList.add('glitch-anim');
+                    AudioEngine.playRiser(3.0); // 3秒爬升音效
+                    
+                    // 屏幕撕裂，底层的 WebGL 隧道逐渐浮现
+                    document.getElementById('webgl-tunnel').style.opacity = 0.8;
+                    WebGLTunnel.init();
+                    
+                    // 准备粒子数据，但不渲染
+                    ParticleEngine.init();
+                    ParticleEngine.prepareShatter();
+                }, 3000);
+
+                // --- [阶段三] 神级降临：视觉核爆 (6s - 9s) ---
+                setTimeout(() => {
+                    termText.style.display = 'none';
+                    
+                    // 1. 重低音核爆音效
+                    AudioEngine.playBassDrop();
+                    // 2. 玻璃碎片重组倒放音效
+                    AudioEngine.playReverseShatter();
+                    
+                    // 3. 触发粒子物理引擎倒放 (历时1.5秒汇聚)
+                    ParticleEngine.startAssemble(1.5);
+                    
+                    // 4. 1.5秒后汇聚完成，触发极其剧烈的屏幕震动
+                    setTimeout(() => {
+                        document.body.classList.add('camera-shake');
+                        // 显示主DOM实现极高泛光 Bloom
+                        const title = document.getElementById('main-title');
+                        title.style.transform = 'translateZ(100px) scale(1.0)';
+                        title.style.transition = 'transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    }, 1400);
+
+                }, 6000);
+
+                // --- [阶段四] 臣服与解码 (9s - 15s) ---
+                setTimeout(() => {
+                    document.body.classList.remove('camera-shake');
+                    
+                    // 开始解码 "尊敬的琉雀玩家" (历时1.5秒)
+                    GlitchDecoder.decode(1500);
+                    
+                    // 开启赛博朋克永续氛围音
+                    AudioEngine.playAmbientDrone();
+
+                    // 激活环境呼吸与鼠标 3D 视差 (Parallax)
+                    this.activateBreathingState();
+                    
+                }, 8500);
+            },
+            
+            // 永续呼吸态：强烈的鼠标交互景深
+            activateBreathingState: function() {
+                const container = document.getElementById('breathing-container');
+                document.addEventListener('mousemove', (e) => {
+                    const xAxis = (window.innerWidth / 2 - e.pageX) / 40; // 鼠标偏移转角度
+                    const yAxis = (window.innerHeight / 2 - e.pageY) / 40;
+                    // 对整个主控体应用 3D 旋转，产生全息悬浮感
+                    container.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+                });
+            }
+        };
+
+        // 绑定启动按钮
+        document.getElementById('init-btn').addEventListener('click', () => {
+            TimelineDirector.start();
+        });
+
+    </script>
+</body>
+</html>
