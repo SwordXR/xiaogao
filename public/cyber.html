@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>琉雀协议：赛博飞升 (Psychedelic Phonk Edition)</title>
+    <style>
+        /* =======================================================================
+           全局环境与暗黑赛博变量
+           ======================================================================= */
+        :root {
+            --neon-green: #00FFAA;
+            --neon-purple: #B026FF;
+            --neon-cyan: #00E5FF;
+            --bg-void: #050508;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        
+        body, html {
+            width: 100vw; height: 100vh; background-color: var(--bg-void);
+            overflow: hidden; font-family: 'Courier New', Courier, monospace;
+            perspective: 1200px;
+        }
+
+        /* 后期处理：中心遮罩与极微弱的 CRT 质感（防止画面糊） */
+        #post-processing {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 4px;
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.95);
+        }
+
+        /* WebGL 隧道与粒子层 */
+        #webgl-tunnel { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0; transition: opacity 2s ease-in; }
+        #particle-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; mix-blend-mode: screen; filter: drop-shadow(0 0 10px var(--neon-cyan)); }
+
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transform-style: preserve-3d; }
+
+        /* 启动按钮 */
+        #init-btn {
+            padding: 15px 40px; border: 1px solid var(--neon-green); background: rgba(0, 255, 170, 0.1);
+            color: var(--neon-green); font-size: 1.2rem; cursor: pointer; letter-spacing: 4px;
+            text-transform: uppercase; box-shadow: 0 0 20px rgba(0, 255, 170, 0.2);
+            transition: all 0.3s; position: absolute; z-index: 200;
+        }
+        #init-btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 50px var(--neon-green); transform: scale(1.05); }
+
+        /* 终端打字协议 */
+        #terminal-text {
+            color: var(--neon-green); font-size: 1.2rem; text-shadow: 0 0 10px var(--neon-green);
+            position: absolute; top: 40%; left: 10%; opacity: 0; font-family: monospace;
+        }
+        .cursor { display: inline-block; width: 10px; height: 1.2rem; background: var(--neon-green); animation: blink 0.8s infinite; }
+
+        /* =======================================================================
+           【光学重构】：极度厚重、迷幻流转的 RGB 光晕包裹 (Psychedelic Aura)
+           放弃了抽搐抖动，采用多层柔和极光发光与色相流转
+           ======================================================================= */
+        #main-title {
+            position: absolute; left: 50%; top: 50%;
+            /* 居中并初始化 3D 深度 */
+            transform: translate(-50%, -50%) translateZ(100px) scale(0.8);
+            text-align: center; font-weight: 900;
+            font-family: 'Arial Black', Impact, sans-serif; letter-spacing: 8px;
+            color: #ffffff; text-transform: uppercase; white-space: nowrap;
+            font-style: italic; /* 机甲前倾 */
+            opacity: 0; pointer-events: none;
+            /* 锐利的实体描边，彻底剥离背景 */
+            -webkit-text-stroke: 2px rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 10px #fff;
+        }
+
+        /* 内层：厚重的高斯模糊紫红色包裹 */
+        #main-title::before {
+            content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+            z-index: -1; color: transparent;
+            -webkit-text-stroke: 12px var(--neon-purple); /* 极厚的边缘 */
+            filter: blur(8px); mix-blend-mode: screen;
+            animation: aura-breath 3s ease-in-out infinite alternate, aura-flow 5s linear infinite;
+        }
+
+        /* 外层：巨大的迷幻青色弥散光晕 */
+        #main-title::after {
+            content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+            z-index: -2; color: transparent;
+            -webkit-text-stroke: 25px var(--neon-cyan); /* 更厚的弥散边缘 */
+            filter: blur(25px); mix-blend-mode: screen;
+            animation: aura-breath 4s ease-in-out infinite alternate-reverse, aura-flow-reverse 7s linear infinite;
+        }
+
+        /* 色相轮转动画（产生极光般的迷幻变色） */
+        @keyframes aura-flow { 0% { filter: hue-rotate(0deg) blur(8px); } 50% { filter: hue-rotate(90deg) blur(12px); } 100% { filter: hue-rotate(0deg) blur(8px); } }
+        @keyframes aura-flow-reverse { 0% { filter: hue-rotate(0deg) blur(25px); } 50% { filter: hue-rotate(-120deg) blur(35px); } 100% { filter: hue-rotate(0deg) blur(25px); } }
+        @keyframes aura-breath { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 1; transform: scale(1.02); } }
+
+        /* 副标题（位置将由JS根据主标题大小动态计算绝对防遮挡） */
+        #subtitle-box {
+            position: absolute; left: 50%; top: 50%;
+            /* 动态 marginTop 由 JS 赋予 */
+            transform: translate(-50%, 0) translateZ(50px);
+            padding: 10px 20px; background: rgba(0,0,0,0.85); border-left: 4px solid var(--neon-green);
+            opacity: 0; pointer-events: none;
+            box-shadow: 0 0 30px rgba(0, 255, 170, 0.2);
+        }
+        #subtitle { color: var(--neon-green); font-size: 1.2rem; letter-spacing: 6px; font-weight: bold; text-shadow: 0 0 15px var(--neon-green); font-family: monospace; white-space: nowrap; }
+
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+        .glitch-anim { animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite; }
+        @keyframes glitch-skew { 0% { transform: skew(0deg); } 20% { transform: skew(-15deg); filter: hue-rotate(45deg); } 40% { transform: skew(15deg); filter: hue-rotate(-45deg); } 60% { transform: skew(0deg); } 80% { transform: translateX(5px); } 100% { transform: translateX(0); } }
+
+        .camera-shake { animation: shake-hard 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake-hard { 0%, 100% { transform: translate3d(0, 0, 0); } 10% { transform: translate3d(-15px, -15px, 0); } 20% { transform: translate3d(15px, 15px, 0); } 30% { transform: translate3d(-20px, 10px, 0); } 40% { transform: translate3d(20px, -10px, 0); } 50% { transform: translate3d(-10px, 20px, 0); } 60% { transform: translate3d(10px, -20px, 0); } }
+
+        #breathing-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.1s ease-out; }
+    
+        #white-flash {
+            position: absolute; top: 50%; left: 50%; width: 100vw; height: 100vw;
+            transform: translate(-50%, -50%) scale(0);
+            background: radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.8) 30%, rgba(255,255,255,0) 70%);
+            z-index: 100000; pointer-events: none;
+            opacity: 0;
+            transition: transform 1.5s cubic-bezier(0.5, 0, 1, 1), opacity 1.5s ease-in;
+        }
+        #white-flash.active {
+            transform: translate(-50%, -50%) scale(3);
+            opacity: 1;
+        }
+        #whiteout {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; opacity: 0; z-index: 100001; pointer-events: none;
+            transition: opacity 1.2s ease-in 0.3s;
+        }
+        #whiteout.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="white-flash"></div>
+    <div id="whiteout"></div>
+    
+    <!-- 狂暴 Phonk 引擎 (设置好炸裂爆发点) -->
+    <!-- 替换为你最炸的本地 phonk.mp3 即可，现链接为动感重低音演示 -->
+    <audio id="phonk-bgm" src="https://cdn.pixabay.com/download/audio/2023/04/07/audio_651a2dfd66.mp3" loop crossorigin="anonymous"></audio>
+
+    <canvas id="webgl-tunnel"></canvas>
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="ui-layer">
+        <button id="init-btn">[ INITIATE VANTAGE_OVERCLOCK ]</button>
+        <div id="terminal-text"><span id="typewriter"></span><span class="cursor"></span></div>
+
+        <div id="breathing-container">
+            <div id="main-title" data-text="SKKA小高">SKKA小高</div>
+            <div id="subtitle-box"><div id="subtitle"></div></div>
+        </div>
+    </div>
+
+    <div id="post-processing"></div>
+
+    <script>
+        /**
+         * =======================================================================
+         * 【听觉超频】：音效库清仓大甩卖级引擎 (The Million-Dollar Soundscape)
+         * =======================================================================
+         */
+        const AudioEngine = {
+            ctx: new (window.AudioContext || window.webkitAudioContext)(),
+            masterGain: null, rumbleOsc: null,
+            init: function() {
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.connect(this.ctx.destination);
+                this.masterGain.gain.value = 0.85;
+            },
+            // 阶段一：深渊机房低频底噪
+            playSubRumble: function() {
+                this.rumbleOsc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                this.rumbleOsc.type = 'sine'; this.rumbleOsc.frequency.setValueAtTime(35, this.ctx.currentTime); // 极低频
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + 2); // 缓缓升起
+                this.rumbleOsc.connect(gain); gain.connect(this.masterGain);
+                this.rumbleOsc.start();
+            },
+            stopSubRumble: function() { if(this.rumbleOsc) this.rumbleOsc.stop(this.ctx.currentTime + 0.5); },
+            // 机械打字声，附带细微的继电器闭合感
+            playType: function() {
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = 'square'; osc.frequency.setValueAtTime(600 + Math.random()*200, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.03);
+                osc.connect(gain); gain.connect(this.masterGain); osc.start(); osc.stop(this.ctx.currentTime + 0.03);
+            },
+            // 阶段二：让人头皮发麻的三重爬升蓄力
+            playMultilayerRiser: function(duration) {
+                // 1. 合成器主爬升
+                const osc1 = this.ctx.createOscillator(); const gain1 = this.ctx.createGain();
+                osc1.type = 'sawtooth'; osc1.frequency.setValueAtTime(50, this.ctx.currentTime); osc1.frequency.exponentialRampToValueAtTime(3000, this.ctx.currentTime + duration);
+                gain1.gain.setValueAtTime(0, this.ctx.currentTime); gain1.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + duration);
+                osc1.connect(gain1); gain1.connect(this.masterGain); osc1.start(); osc1.stop(this.ctx.currentTime + duration);
+                
+                // 2. 高频电容充电音
+                const osc2 = this.ctx.createOscillator(); const gain2 = this.ctx.createGain();
+                osc2.type = 'sine'; osc2.frequency.setValueAtTime(1000, this.ctx.currentTime); osc2.frequency.exponentialRampToValueAtTime(10000, this.ctx.currentTime + duration);
+                gain2.gain.setValueAtTime(0, this.ctx.currentTime); gain2.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime + duration);
+                osc2.connect(gain2); gain2.connect(this.masterGain); osc2.start(); osc2.stop(this.ctx.currentTime + duration);
+            },
+            // 阶段三：毁天灭地的三合一物理核爆
+            playCinematicImpact: function() {
+                const now = this.ctx.currentTime;
+                // 1. 深渊 808 巨型爆炸 (Sub Drop)
+                const subOsc = this.ctx.createOscillator(); const subGain = this.ctx.createGain();
+                subOsc.type = 'sine'; subOsc.frequency.setValueAtTime(120, now); subOsc.frequency.exponentialRampToValueAtTime(5, now + 1.5);
+                subGain.gain.setValueAtTime(2.0, now); subGain.gain.exponentialRampToValueAtTime(0.01, now + 2);
+                subOsc.connect(subGain); subGain.connect(this.masterGain); subOsc.start(now); subOsc.stop(now + 2);
+
+                // 2. 沉重金属砸击声 (Metal Slam)
+                const slamOsc = this.ctx.createOscillator(); const slamGain = this.ctx.createGain();
+                slamOsc.type = 'square'; slamOsc.frequency.setValueAtTime(100, now); slamOsc.frequency.exponentialRampToValueAtTime(10, now + 0.3);
+                slamGain.gain.setValueAtTime(1.0, now); slamGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                const slamFilter = this.ctx.createBiquadFilter(); slamFilter.type = 'lowpass'; slamFilter.frequency.setValueAtTime(800, now);
+                slamOsc.connect(slamFilter); slamFilter.connect(slamGain); slamGain.connect(this.masterGain); slamOsc.start(now); slamOsc.stop(now + 0.4);
+
+                // 3. 高频玻璃炸裂声 (Glass Shatter)
+                const noiseSize = this.ctx.sampleRate * 0.5; const noiseBuffer = this.ctx.createBuffer(1, noiseSize, this.ctx.sampleRate);
+                const noiseData = noiseBuffer.getChannelData(0); for(let i=0; i<noiseSize; i++) noiseData[i] = Math.random() * 2 - 1;
+                const noiseSrc = this.ctx.createBufferSource(); noiseSrc.buffer = noiseBuffer;
+                const noiseFilter = this.ctx.createBiquadFilter(); noiseFilter.type = 'highpass'; noiseFilter.frequency.value = 3000;
+                const noiseGain = this.ctx.createGain(); noiseGain.gain.setValueAtTime(1.5, now); noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                noiseSrc.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(this.masterGain); noiseSrc.start(now);
+            },
+            // 阶段四：清脆的水晶黑客解码音
+            playCrystalDecode: function() {
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(2500 + Math.random()*1500, this.ctx.currentTime); // 极高频随机水滴音
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+                osc.connect(gain); gain.connect(this.masterGain); osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+            }
+        };
+
+        const WebGLTunnel = {
+            canvas: document.getElementById('webgl-tunnel'),
+            gl: null, program: null, timeLoc: null, resLoc: null, startTime: 0,
+            vsSource: `attribute vec4 aVertexPosition; void main() { gl_Position = aVertexPosition; }`,
+            fsSource: `
+                #ifdef GL_ES
+                precision highp float;
+                #endif
+                uniform float u_time;
+                uniform vec2 u_resolution;
+                void main(void) {
+                    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.y, u_resolution.x);
+                    float a = atan(uv.y, uv.x); float r = length(uv);
+                    vec2 tunnelUV = vec2(0.5 / r + u_time * 2.5, a / 3.1415926); // 稍微加速以匹配 Phonk 节奏
+                    
+                    float gridX = abs(fract(tunnelUV.x * 10.0) - 0.5) * 20.0;
+                    float gridY = abs(fract(tunnelUV.y * 10.0) - 0.5) * 20.0;
+                    float line = 1.0 - min(gridX, gridY);
+                    
+                    float depthFade = r * 1.5;
+                    float centerDarken = smoothstep(0.15, 0.7, r); // 强大的中心暗场遮罩
+                    
+                    vec3 neonColor = vec3(0.0, 1.0, 0.66) * sin(tunnelUV.x * 2.0) + vec3(0.69, 0.15, 1.0) * cos(tunnelUV.y * 5.0);
+                    vec3 finalColor = neonColor * line * depthFade * centerDarken;
+                    
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }
+            `,
+            init: function() {
+                this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+                this.resize(); window.addEventListener('resize', () => this.resize());
+                
+                const vs = this.gl.createShader(this.gl.VERTEX_SHADER); this.gl.shaderSource(vs, this.vsSource); this.gl.compileShader(vs);
+                const fs = this.gl.createShader(this.gl.FRAGMENT_SHADER); this.gl.shaderSource(fs, this.fsSource); this.gl.compileShader(fs);
+                this.program = this.gl.createProgram(); this.gl.attachShader(this.program, vs); this.gl.attachShader(this.program, fs);
+                this.gl.linkProgram(this.program); this.gl.useProgram(this.program);
+                
+                const vertices = new Float32Array([-1.0, -1.0,  1.0, -1.0, -1.0,  1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0]);
+                const buffer = this.gl.createBuffer(); this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer); this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+                
+                const pos = this.gl.getAttribLocation(this.program, "aVertexPosition"); this.gl.enableVertexAttribArray(pos); this.gl.vertexAttribPointer(pos, 2, this.gl.FLOAT, false, 0, 0);
+                this.timeLoc = this.gl.getUniformLocation(this.program, "u_time"); this.resLoc = this.gl.getUniformLocation(this.program, "u_resolution");
+                this.startTime = Date.now(); this.render();
+            },
+            resize: function() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; this.gl.viewport(0, 0, this.canvas.width, this.canvas.height); },
+            render: function() { this.gl.uniform1f(this.timeLoc, (Date.now() - this.startTime) * 0.001); this.gl.uniform2f(this.resLoc, this.canvas.width, this.canvas.height); this.gl.drawArrays(this.gl.TRIANGLES, 0, 6); requestAnimationFrame(() => this.render()); }
+        };
+
+        const ParticleEngine = {
+            canvas: document.getElementById('particle-canvas'), ctx: null, particles: [], isAssembling: false, animationId: null, targetText: "SKKA小高",
+            init: function() { this.ctx = this.canvas.getContext('2d', { willReadFrequently: true }); this.resize(); window.addEventListener('resize', () => this.resize()); },
+            resize: function() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; },
+            
+            prepareShatter: function() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // 【全屏幕完美防遮挡逻辑】：双轴探测
+                let dynamicFontSize = 300;
+                this.ctx.font = `900 italic ${dynamicFontSize}px 'Arial Black', Impact, sans-serif`;
+                
+                // 确保宽度不超出屏幕的 80%，且高度不超过屏幕高度的 25% (为副标题留出安全距离)
+                while (
+                    this.ctx.measureText(this.targetText).width > this.canvas.width * 0.8 ||
+                    dynamicFontSize > this.canvas.height * 0.25
+                ) {
+                    dynamicFontSize -= 5;
+                    this.ctx.font = `900 italic ${dynamicFontSize}px 'Arial Black', Impact, sans-serif`;
+                    if (dynamicFontSize < 20) break; // 极限保护
+                }
+
+                // 1. 同步字号给主标题
+                const mainTitle = document.getElementById('main-title');
+                mainTitle.style.fontSize = dynamicFontSize + 'px';
+                
+                // 2. 动态计算副标题的间距 (永远在主标题下方安全位置)
+                const subtitleBox = document.getElementById('subtitle-box');
+                subtitleBox.style.marginTop = (dynamicFontSize / 2 + 40) + 'px';
+
+                this.ctx.fillStyle = "#fff"; this.ctx.textAlign = "center"; this.ctx.textBaseline = "middle";
+                this.ctx.fillText(this.targetText, this.canvas.width / 2, this.canvas.height / 2);
+
+                const imgData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.particles = [];
+                const step = window.innerWidth < 768 ? 5 : 3; // 手机端性能保护
+
+                for (let y = 0; y < imgData.height; y += step) {
+                    for (let x = 0; x < imgData.width; x += step) {
+                        const alpha = imgData.data[(y * imgData.width + x) * 4 + 3];
+                        if (alpha > 128) {
+                            const angle = Math.random() * Math.PI * 2;
+                            const radius = Math.random() * 3000 + 1000;
+                            const sx = this.canvas.width/2 + Math.cos(angle) * radius; const sy = this.canvas.height/2 + Math.sin(angle) * radius;
+                            this.particles.push({
+                                sx: sx, sy: sy, tx: x, ty: y, x: sx, y: sy,
+                                size: Math.random() * 2 + 1.5,
+                                color: Math.random() > 0.5 ? '#00E5FF' : '#B026FF',
+                                delay: Math.random() * 0.5
+                            });
+                        }
+                    }
+                }
+            },
+            startAssemble: function(duration) {
+                this.isAssembling = true; const startTime = Date.now();
+                const render = () => {
+                    this.ctx.fillStyle = 'rgba(5, 5, 8, 0.4)'; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    const elapsed = (Date.now() - startTime) / 1000; let allArrived = true;
+
+                    for (let i = 0; i < this.particles.length; i++) {
+                        const p = this.particles[i];
+                        if (elapsed > p.delay) {
+                            let progress = (elapsed - p.delay) / (duration - p.delay);
+                            if (progress > 1) progress = 1; else allArrived = false;
+                            const ease = 1 - Math.pow(1 - progress, 5); // 暴力吸入缓动
+                            p.x = p.sx + (p.tx - p.sx) * ease; p.y = p.sy + (p.ty - p.sy) * ease;
+                            this.ctx.fillStyle = p.color; this.ctx.fillRect(p.x, p.y, p.size, p.size);
+                        }
+                    }
+                    if (!allArrived) { this.animationId = requestAnimationFrame(render); } 
+                    else {
+                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                        document.getElementById('main-title').style.opacity = 1;
+                    }
+                };
+                render();
+            }
+        };
+
+        const GlitchDecoder = {
+            targetText: "尊敬的琉雀玩家", element: document.getElementById('subtitle'), chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*<>[]{}",
+            decode: function(duration) {
+                document.getElementById('subtitle-box').style.opacity = 1;
+                let iterations = 0; const maxIterations = 35; const interval = duration / maxIterations;
+                const timer = setInterval(() => {
+                    let result = "";
+                    for(let i=0; i<this.targetText.length; i++) {
+                        if(i < iterations / (maxIterations / this.targetText.length)) result += this.targetText[i];
+                        else result += this.chars[Math.floor(Math.random() * this.chars.length)];
+                    }
+                    this.element.innerText = result; 
+                    AudioEngine.playCrystalDecode(); // 替换为清脆的水晶解码音
+                    iterations++;
+                    if(iterations > maxIterations) { clearInterval(timer); this.element.innerText = this.targetText; }
+                }, interval);
+            }
+        };
+
+        const TimelineDirector = {
+            start: function() {
+                document.getElementById('init-btn').style.display = 'none';
+                AudioEngine.init();
+                
+                // 阶段一：怠速低频与入侵指令
+                AudioEngine.playSubRumble();
+                const termText = document.getElementById('terminal-text');
+                termText.style.opacity = 1;
+                const typeText = "> INITIATING VANTAGE_OVERCLOCK...";
+                let typeIdx = 0;
+                const typeInterval = setInterval(() => {
+                    document.getElementById('typewriter').innerText += typeText[typeIdx];
+                    AudioEngine.playType(); typeIdx++;
+                    if(typeIdx >= typeText.length) clearInterval(typeInterval);
+                }, 50);
+
+                // 阶段二：三重爬升蓄力与隧道浮现
+                setTimeout(() => {
+                    termText.classList.add('glitch-anim');
+                    AudioEngine.playMultilayerRiser(3.0); 
+                    
+                    document.getElementById('webgl-tunnel').style.opacity = 0.8;
+                    WebGLTunnel.init();
+                    ParticleEngine.init(); ParticleEngine.prepareShatter();
+                }, 3000);
+
+                // 阶段三：视觉、物理音频、Phonk 三重核爆
+                setTimeout(() => {
+                    termText.style.display = 'none';
+                    AudioEngine.stopSubRumble();
+                    
+                    // 粒子极速拼合
+                    ParticleEngine.startAssemble(1.5);
+                    
+                    // 当汇聚完成时的终极核爆点
+                    setTimeout(() => {
+                        // 1. 三合一影视级物理砸击音
+                        AudioEngine.playCinematicImpact();
+                        
+                        // 2. 引爆 Phonk BGM (设定为最炸的时段，如 10 秒起)
+                        const phonkTrack = document.getElementById('phonk-bgm');
+                        phonkTrack.volume = 0.8; phonkTrack.currentTime = 10; 
+                        const playPromise = phonkTrack.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => console.log("Audio blocked by browser policy."));
+                        }
+
+                        // 3. 屏幕核爆震动与主标题发光厚甲显示
+                        document.body.classList.add('camera-shake');
+                        const title = document.getElementById('main-title');
+                        // 维持居中并拉近 Z 轴产生压迫感
+                        title.style.transform = 'translate(-50%, -50%) translateZ(100px) scale(1.0)';
+                        title.style.transition = 'transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    }, 1400); // 在 1.5 秒汇聚完成前的 0.1 秒提前引爆，产生“砸上去”的错觉
+
+                }, 6000);
+
+                // 阶段四：清脆解码与永续迷幻呼吸态
+                setTimeout(() => {
+                    document.body.classList.remove('camera-shake');
+                    GlitchDecoder.decode(1500);
+                    this.activateBreathingState();
+                }, 8500);
+                
+                setTimeout(() => {
+                     triggerFlashout();
+                }, 16000); // Trigger flash out after lingering
+            },
+            activateBreathingState: function() {
+                const container = document.getElementById('breathing-container');
+                document.addEventListener('mousemove', (e) => {
+                    const xAxis = (window.innerWidth / 2 - e.pageX) / 45;
+                    const yAxis = (window.innerHeight / 2 - e.pageY) / 45;
+                    container.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+                });
+            }
+        };
+
+        // 用户点击，正式激活所有引擎
+        document.getElementById('init-btn').addEventListener('click', () => {
+            TimelineDirector.start();
+        });
+        
+        // Flashout logic
+        let isFlashing = false;
+        function triggerFlashout() {
+            if (isFlashing) return;
+            isFlashing = true;
+            
+            document.getElementById('white-flash').classList.add('active');
+            document.getElementById('whiteout').classList.add('active');
+            
+            if (AudioEngine.masterGain && AudioEngine.ctx) {
+                const now = AudioEngine.ctx.currentTime;
+                // fade out audio quickly
+                AudioEngine.masterGain.gain.setValueAtTime(AudioEngine.masterGain.gain.value || 1, now);
+                AudioEngine.masterGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+            }
+
+            setTimeout(() => {
+                window.parent.postMessage('animation_complete', '*');
+            }, 1500); 
+        }
+
+        window.addEventListener('message', (e) => {
+            if (e.data === 'trigger_flash') {
+                triggerFlashout();
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                triggerFlashout();
+            }
+        });
+    </script>
+</body>
+</html>

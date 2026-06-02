@@ -1,0 +1,122 @@
+[
+  {
+    "id": "w21", "word": "Ameliorate", "phonetic": "/əˈmiːli.ə.reɪt/", "partOfSpeech": "verb",
+    "definition": "Make (something bad or unsatisfactory) better.", "definitionTranslation": "改善（糟糕或令人不满意的情况）。", "translation": "改善，减轻",
+    "example": "The reform did much to ameliorate living standards.", "exampleTranslation": "这项改革大大改善了生活水平。", "morphology": "Root: melior (better)", "morphologyTranslation": "词根: melior (更好)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w22", "word": "Anomalous", "phonetic": "/əˈnɒm.ə.ləs/", "partOfSpeech": "adjective",
+    "definition": "Deviating from what is standard, normal, or expected.", "definitionTranslation": "偏离标准、正常或预期的。", "translation": "异常的，不规则的",
+    "example": "An anomalous situation.", "exampleTranslation": "一种反常的情况。", "morphology": "Prefix: an- (not) + Root: homalos (even)", "morphologyTranslation": "前缀: an- (否定) + 词根: homalos (均匀)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w23", "word": "Banal", "phonetic": "/bəˈnɑːl/", "partOfSpeech": "adjective",
+    "definition": "So lacking in originality as to be obvious and boring.", "definitionTranslation": "缺乏独创性，以至于显得平庸和乏味。", "translation": "平庸的，陈腐的",
+    "example": "Songs with banal, repeated words.", "exampleTranslation": "歌词平庸、重复的歌曲。", "morphology": "Root: ban (proclamation)", "morphologyTranslation": "词根: ban (公告)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w24", "word": "Capricious", "phonetic": "/kəˈprɪʃ.əs/", "partOfSpeech": "adjective",
+    "definition": "Given to sudden and unaccountable changes of mood or behavior.", "definitionTranslation": "情绪或行为经常突然和无法解释地改变的。", "translation": "反复无常的，善变的",
+    "example": "A capricious and often brutal administration.", "exampleTranslation": "一个反复无常且往往残酷的政府。", "morphology": "Root: caprice (whim)", "morphologyTranslation": "词根: caprice (异想天开)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w25", "word": "Derivative", "phonetic": "/dɪˈrɪv.ə.tɪv/", "partOfSpeech": "adjective",
+    "definition": "Imitative of the work of another person.", "definitionTranslation": "模仿他人作品的。", "translation": "派生的，模仿的",
+    "example": "An artist who is not in the slightest bit derivative.", "exampleTranslation": "一位毫不具有模仿痕迹的艺术家。", "morphology": "Root: derive", "morphologyTranslation": "词根: derive (源自)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w26", "word": "Eradicate", "phonetic": "/ɪˈræd.ɪ.keɪt/", "partOfSpeech": "verb",
+    "definition": "Destroy completely; put an end to.", "definitionTranslation": "彻底摧毁；结束。", "translation": "根除，扑灭",
+    "example": "This disease has been eradicated from the world.", "exampleTranslation": "这种疾病已从世界上根除。", "morphology": "Prefix: e- (out) + Root: radix (root)", "morphologyTranslation": "前缀: e- (出) + 词根: radix (根)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w27", "word": "Frivolous", "phonetic": "/ˈfrɪv.əl.əs/", "partOfSpeech": "adjective",
+    "definition": "Not having any serious purpose or value.", "definitionTranslation": "没有严重目的或价值的。", "translation": "无价值的，轻佻的",
+    "example": "Rules to stop frivolous lawsuits.", "exampleTranslation": "旨在阻止轻浮诉讼的规则。", "morphology": "Root: frivolus (silly)", "morphologyTranslation": "词根: frivolus (愚蠢的)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w28", "word": "Garrulous", "phonetic": "/ˈɡær.əl.əs/", "partOfSpeech": "adjective",
+    "definition": "Excessively talkative, especially on trivial matters.", "definitionTranslation": "喋喋不休，特别是谈论琐事。", "translation": "喋喋不休的，饶舌的",
+    "example": "Polonius is portrayed as a foolish, garrulous old man.", "exampleTranslation": "波洛纽斯被描绘成一个愚蠢、喋喋不休的老人。", "morphology": "Root: garrire (to chatter)", "morphologyTranslation": "词根: garrire (闲谈)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w29", "word": "Hypothetical", "phonetic": "/ˌhaɪ.pəˈθet.ɪ.kəl/", "partOfSpeech": "adjective",
+    "definition": "Of, based on, or serving as a hypothesis.", "definitionTranslation": "关于、基于或用作假设的。", "translation": "假设的，假定的",
+    "example": "That option is merely hypothetical at this juncture.", "exampleTranslation": "在目前这个关头，那个选择仅仅是个假设。", "morphology": "Root: hypothesis", "morphologyTranslation": "词根: hypothesis (假设)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w30", "word": "Indelible", "phonetic": "/ɪnˈdel.ə.bəl/", "partOfSpeech": "adjective",
+    "definition": "Making marks that cannot be removed.", "definitionTranslation": "留下无法去除的印记的。", "translation": "擦不掉的，难以抹灭的",
+    "example": "His story made an indelible impression on me.", "exampleTranslation": "他的故事给我留下了难以磨灭的印象。", "morphology": "Prefix: in- (not) + Root: delere (to destroy)", "morphologyTranslation": "前缀: in- (不) + 词根: delere (破坏)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w31", "word": "Juxtapose", "phonetic": "/ˌdʒʌk.stəˈpəʊz/", "partOfSpeech": "verb",
+    "definition": "Place or deal with close together for contrasting effect.", "definitionTranslation": "把...并列或并置以进行对比。", "translation": "并列放置，并置",
+    "example": "Black-and-white photos of slums were starkly juxtaposed with color images.", "exampleTranslation": "贫民窟的黑白照片与彩色图片形成了鲜明对比。", "morphology": "Prefix: juxta (next) + Root: poser (to place)", "morphologyTranslation": "前缀: juxta (紧挨) + 词根: poser (放置)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w32", "word": "Kinetic", "phonetic": "/kɪˈnet.ɪk/", "partOfSpeech": "adjective",
+    "definition": "Relating to or resulting from motion.", "definitionTranslation": "与运动相关的或由运动产生的。", "translation": "运动的",
+    "example": "Kinetic energy is the energy of motion.", "exampleTranslation": "动能是运动产生的能量。", "morphology": "Root: kinein (to move)", "morphologyTranslation": "词根: kinein (移动)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w33", "word": "Lethargic", "phonetic": "/ləˈθɑː.dʒɪk/", "partOfSpeech": "adjective",
+    "definition": "Affected by lethargy; sluggish and apathetic.", "definitionTranslation": "受嗜睡症影响的；迟缓且冷漠的。", "translation": "昏睡的，无生气的",
+    "example": "I felt tired and a little lethargic.", "exampleTranslation": "我感觉累了，而且有点昏昏欲睡。", "morphology": "Root: lethargia", "morphologyTranslation": "词根: lethargia (嗜睡)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w34", "word": "Meticulous", "phonetic": "/məˈtɪk.jə.ləs/", "partOfSpeech": "adjective",
+    "definition": "Showing great attention to detail; very careful and precise.", "definitionTranslation": "对细节非常关注的；十分小心且精确的。", "translation": "一丝不苟的",
+    "example": "He had always been so meticulous about his appearance.", "exampleTranslation": "他总是对自己的外表一丝不苟。", "morphology": "Root: metus (fear)", "morphologyTranslation": "词根: metus (恐惧)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w35", "word": "Nefarious", "phonetic": "/nɪˈfeə.ri.əs/", "partOfSpeech": "adjective",
+    "definition": "Wicked or criminal.", "definitionTranslation": "邪恶的或犯罪的。", "translation": "邪恶的，极坏的",
+    "example": "The nefarious activities of the organized-crime syndicates.", "exampleTranslation": "有组织犯罪集团的邪恶活动。", "morphology": "Root: nefas (wrong)", "morphologyTranslation": "词根: nefas (罪恶)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w36", "word": "Obfuscate", "phonetic": "/ˈɒb.fʌs.keɪt/", "partOfSpeech": "verb",
+    "definition": "Render obscure, unclear, or unintelligible.", "definitionTranslation": "使变得模糊、不清晰或难以理解。", "translation": "使模糊，使混乱",
+    "example": "The spelling changes will deform some familiar words and obfuscate their etymological origins.", "exampleTranslation": "拼写的变化将使一些熟悉的单词变形，并使它们的词源来源变得模糊。", "morphology": "Prefix: ob- (over) + Root: fuscus (dark)", "morphologyTranslation": "前缀: ob- (遮掩) + 词根: fuscus (黑暗)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w37", "word": "Palliative", "phonetic": "/ˈpæl.i.ə.tɪv/", "partOfSpeech": "adjective",
+    "definition": "Relieving pain without dealing with the cause of the condition.", "definitionTranslation": "减轻疼痛而不处理病状原因的。", "translation": "缓和的，姑息的",
+    "example": "Orthodox medicines tend to be palliative rather than curative.", "exampleTranslation": "传统医药往往是姑息性的而非根治性的。", "morphology": "Root: palliare (to cloak)", "morphologyTranslation": "词根: palliare (掩饰，遮盖)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w38", "word": "Quixotic", "phonetic": "/kwɪkˈsɒt.ɪk/", "partOfSpeech": "adjective",
+    "definition": "Extremely idealistic; unrealistic and impractical.", "definitionTranslation": "极其理想主义的；不切实际的。", "translation": "堂吉诃德式的，狂想的",
+    "example": "A vast and perhaps quixotic project.", "exampleTranslation": "一个庞大而或许不切实际的项目。", "morphology": "Root: Don Quixote", "morphologyTranslation": "词根: Don Quixote (堂吉诃德)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w39", "word": "Redundant", "phonetic": "/rɪˈdʌn.dənt/", "partOfSpeech": "adjective",
+    "definition": "Not or no longer needed or useful; superfluous.", "definitionTranslation": "不再需要或不再有用的；多余的。", "translation": "多余的，过剩的",
+    "example": "Many of the old skills had become redundant.", "exampleTranslation": "许多老技能已经变得有些多余了。", "morphology": "Prefix: re- (again) + Root: undare (surge)", "morphologyTranslation": "前缀: re- (再) + 词根: undare (起伏)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  },
+  {
+    "id": "w40", "word": "Synthesize", "phonetic": "/ˈsɪn.θə.saɪz/", "partOfSpeech": "verb",
+    "definition": "Make (something) by synthesis, especially chemically.", "definitionTranslation": "特别是指通过化学方式合成（某物）。", "translation": "综合，合成",
+    "example": "Man synthesizes new chemical compounds.", "exampleTranslation": "人类合成新的化合物。", "morphology": "Root: synthesis", "morphologyTranslation": "词根: synthesis (综合)",
+    "nextReview": 0, "interval": 0, "repetition": 0, "efactor": 2.5
+  }
+]
