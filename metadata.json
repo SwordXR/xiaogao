@@ -1,5 +1,5 @@
 {
-  "name": "IELTS Study Assistant",
+  "name": "雅思铸剑计划",
   "description": "An interactive study tool for IELTS vocabulary, reading, and listening practice.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
