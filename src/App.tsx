@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { BookOpen, Headphones, Brain, GraduationCap, PenTool, LayoutGrid, Settings, Search } from 'lucide-react';
+import { BookOpen, Headphones, Brain, GraduationCap, PenTool, LayoutGrid, Settings, Search, Sun, Moon } from 'lucide-react';
 import Home from './components/Home';
 import Vocabulary from './components/Vocabulary';
 import ReadingModule from './components/ReadingModule';
@@ -16,6 +16,7 @@ import CyberAnimation from './components/CyberAnimation';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModuleType } from './types';
 import { useLanguage } from './contexts/LanguageContext';
+import { useTheme } from './contexts/ThemeContext';
 
 export default function App() {
   const [activeModule, setActiveModule] = useState<ModuleType>('home');
@@ -23,35 +24,46 @@ export default function App() {
   const [showSearch, setShowSearch] = useState(false);
   
   const [authState, setAuthState] = useState<'login' | 'animation' | 'authenticated'>('login');
+  const [isDeveloper, setIsDeveloper] = useState(false);
+  const [loginUser, setLoginUser] = useState<string>('');
 
   const { language, setLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
 
   if (authState === 'login') {
     return (
-      <LoginScreen onLoginSuccess={() => {
-        setAuthState('animation');
+      <LoginScreen onLoginSuccess={(isDev, username) => {
+        setLoginUser(username);
+        if (isDev) {
+          setIsDeveloper(true);
+          sessionStorage.setItem('isLoggedIn', 'true');
+          setAuthState('authenticated');
+        } else {
+          setIsDeveloper(false);
+          setAuthState('animation');
+        }
       }} />
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] font-sans selection:bg-amber-200 selection:text-stone-900">
+    <div className={`min-h-screen bg-[var(--bg-app)] text-[var(--text-app)] font-sans selection:bg-amber-200 selection:text-stone-900 transition-colors duration-300`}>
       <AnimatePresence>
         {authState === 'animation' && (
-          <CyberAnimation key="cyber-animation" onComplete={() => {
+          <CyberAnimation username={loginUser} key="cyber-animation" onComplete={() => {
             sessionStorage.setItem('isLoggedIn', 'true');
             setAuthState('authenticated');
           }} />
         )}
       </AnimatePresence>
       {/* Header */}
-      <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
+      <header className="bg-white dark:bg-[#1a1a1a] border-b border-stone-200 dark:border-stone-800 sticky top-0 z-10 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
               <button 
                 onClick={() => setShowSettings(!showSettings)}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-stone-500 hover:bg-stone-100 transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                 title={language === 'zh' ? '设置' : 'Settings'}
               >
                 <Settings className="w-5 h-5" />
@@ -60,20 +72,43 @@ export default function App() {
               {showSettings && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowSettings(false)}></div>
-                  <div className="absolute top-12 left-0 w-48 bg-white border border-stone-200 shadow-lg rounded-xl z-20 py-2">
+                  <div className="absolute top-12 left-0 w-48 bg-white dark:bg-[#222] border border-stone-200 dark:border-stone-800 shadow-lg rounded-xl z-20 py-2">
                     <p className="px-4 py-2 text-xs font-semibold text-stone-400 tracking-wider">LANGUAGE / 语言</p>
                     <button 
                       onClick={() => { setLanguage('en'); setShowSettings(false); }}
-                      className={`w-full text-left px-4 py-2 text-sm ${language === 'en' ? 'bg-amber-50 text-amber-900 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
+                      className={`w-full text-left px-4 py-2 text-sm ${language === 'en' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100 font-medium' : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'}`}
                     >
                       English
                     </button>
                     <button 
                       onClick={() => { setLanguage('zh'); setShowSettings(false); }}
-                      className={`w-full text-left px-4 py-2 text-sm ${language === 'zh' ? 'bg-amber-50 text-amber-900 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
+                      className={`w-full text-left px-4 py-2 text-sm ${language === 'zh' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100 font-medium' : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'}`}
                     >
                       中文
                     </button>
+
+                    <div className="my-2 border-t border-stone-100 dark:border-stone-800"></div>
+                    <p className="px-4 py-2 text-xs font-semibold text-stone-400 tracking-wider">THEME / 主题</p>
+                    <button 
+                      onClick={() => { toggleTheme(); setShowSettings(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 flex items-center gap-2"
+                    >
+                      {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                      {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                    </button>
+
+                    {isDeveloper && (
+                      <>
+                        <div className="my-2 border-t border-stone-100 dark:border-stone-800"></div>
+                        <p className="px-4 py-2 text-xs font-semibold text-stone-400 tracking-wider">DEVELOPER / 开发者</p>
+                        <button 
+                          onClick={() => { setShowSettings(false); }}
+                          className="w-full text-left px-4 py-2 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 flex items-center gap-2"
+                        >
+                          Developer Options
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -82,26 +117,26 @@ export default function App() {
               <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
                 <GraduationCap className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-serif font-medium text-stone-900">{t('app.title')}</h1>
+              <h1 className="text-xl font-serif font-medium text-stone-900 dark:text-stone-100 transition-colors">{t('app.title')}</h1>
             </button>
           </div>
           
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowSearch(true)}
-              className="w-10 h-10 flex items-center justify-center text-amber-600 hover:bg-amber-50 rounded-full transition-colors mr-2"
+              className="w-10 h-10 flex items-center justify-center text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-800 rounded-full transition-colors mr-2"
               title="Search Vocabulary / 搜索词汇"
             >
               <Search className="w-5 h-5" />
             </button>
             
-            <nav className="hidden md:flex space-x-1 bg-stone-100 p-1 rounded-xl">
+            <nav className="hidden md:flex space-x-1 bg-stone-100 dark:bg-stone-800 p-1 rounded-xl transition-colors duration-300">
             <button
               onClick={() => setActiveModule('home')}
               className={`px-3 py-1.5 text-sm font-medium rounded-lg flex items-center gap-2 transition-all ${
                 activeModule === 'home' 
-                  ? 'bg-white text-stone-900 shadow-sm' 
-                  : 'text-stone-500 hover:text-stone-700 hover:bg-stone-200/50'
+                  ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm' 
+                  : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-stone-700/50'
               }`}
             >
               <LayoutGrid className="w-4 h-4" />

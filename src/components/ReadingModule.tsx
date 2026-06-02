@@ -40,15 +40,15 @@ export default function ReadingModule() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
         {/* Left: Passage */}
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-100 overflow-y-auto max-h-[70vh]">
-          <h3 className="text-xl font-medium text-stone-900 mb-6">
+        <div className="bg-white dark:bg-[#222] p-8 md:p-12 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-800 overflow-y-auto max-h-[75vh]">
+          <h3 className="text-2xl font-serif text-stone-900 dark:text-stone-100 mb-8 border-b border-stone-100 dark:border-stone-800 pb-6">
              <InteractiveText text={sampleReadingTest.title} onWordClick={setLookupWord} onSelection={setSelectedText} />
           </h3>
-          <div className="prose prose-stone max-w-none">
+          <div className="prose prose-stone dark:prose-invert prose-lg max-w-none text-stone-700 dark:text-stone-300">
             {sampleReadingTest.content.split('\n\n').map((paragraph, idx) => (
-              <p key={idx} className="text-stone-700 leading-relaxed mb-4">
+              <p key={idx} className="mb-6 text-[1.05rem] leading-loose">
                 <InteractiveText text={paragraph} onWordClick={setLookupWord} onSelection={setSelectedText} />
               </p>
             ))}
@@ -56,8 +56,8 @@ export default function ReadingModule() {
         </div>
 
         {/* Right: Questions */}
-        <div className="bg-stone-50 p-8 rounded-3xl border border-stone-200 overflow-y-auto max-h-[70vh]">
-          <h3 className="text-lg font-medium text-stone-800 mb-6">{t('reading.questions')}</h3>
+        <div className="bg-stone-50 dark:bg-[#1f1f1f] p-8 rounded-3xl border border-stone-200 dark:border-stone-800 overflow-y-auto max-h-[75vh]">
+          <h3 className="text-lg font-medium text-stone-800 dark:text-stone-200 mb-6">{t('reading.questions')}</h3>
           
           <div className="space-y-8">
             {sampleReadingTest.questions.map((q, idx) => {
@@ -65,9 +65,9 @@ export default function ReadingModule() {
               const isWrong = submitted && answers[q.id] && answers[q.id]?.toLowerCase() !== q.answer.toLowerCase();
 
               return (
-                <div key={q.id} className={`p-6 rounded-2xl bg-white border ${isCorrect ? 'border-green-200 bg-green-50/30' : isWrong ? 'border-red-200 bg-red-50/30' : 'border-stone-100'}`}>
-                  <p className="font-medium text-stone-800 mb-4">
-                    <span className="text-stone-400 mr-2">{idx + 1}.</span>
+                <div key={q.id} className={`p-6 rounded-2xl bg-white dark:bg-stone-900 border transition-colors ${isCorrect ? 'border-green-200 dark:border-green-900 bg-green-50/30 dark:bg-green-900/20' : isWrong ? 'border-red-200 dark:border-red-900 bg-red-50/30 dark:bg-red-900/20' : 'border-stone-100 dark:border-stone-800'}`}>
+                  <p className="font-medium text-stone-800 dark:text-stone-200 mb-4">
+                    <span className="text-stone-400 dark:text-stone-500 mr-2">{idx + 1}.</span>
                     {q.text}
                   </p>
                   
@@ -77,7 +77,7 @@ export default function ReadingModule() {
                         <label 
                           key={opt} 
                           className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors
-                            ${answers[q.id] === opt ? 'bg-amber-100 border border-amber-300' : 'bg-stone-50 border border-transparent hover:bg-stone-100'}
+                            ${answers[q.id] === opt ? 'bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700/50' : 'bg-stone-50 dark:bg-stone-800 border border-transparent hover:bg-stone-100 dark:hover:bg-stone-700'}
                           `}
                         >
                           <input 
@@ -89,10 +89,10 @@ export default function ReadingModule() {
                             disabled={submitted}
                             className="hidden"
                           />
-                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${answers[q.id] === opt ? 'border-amber-500' : 'border-stone-400'}`}>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${answers[q.id] === opt ? 'border-amber-500' : 'border-stone-400 dark:border-stone-600'}`}>
                             {answers[q.id] === opt && <div className="w-2 h-2 rounded-full bg-amber-500" />}
                           </div>
-                          <span className="text-stone-700">{opt}</span>
+                          <span className="text-stone-700 dark:text-stone-300">{opt}</span>
                         </label>
                       ))}
                     </div>
@@ -107,9 +107,9 @@ export default function ReadingModule() {
                         onChange={(e) => handleAnswer(q.id, e.target.value)}
                         disabled={submitted}
                         className={`w-full p-4 rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all ${
-                          isCorrect ? 'border-green-300 bg-green-50 text-green-800' : 
-                          isWrong ? 'border-red-300 bg-red-50 text-red-800' : 
-                          'border-stone-200 bg-stone-50 text-stone-800'
+                          isCorrect ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 
+                          isWrong ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300' : 
+                          'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 placeholder:text-stone-400'
                         }`}
                       />
                     </div>

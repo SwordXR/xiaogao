@@ -1,4 +1,4 @@
-import { WordItem, ReadingTest, ListeningTest } from '../types';
+import { WordItem, ReadingTest, ListeningTest } from './types';
 
 export const initialWords: WordItem[] = [
   {
@@ -126,20 +126,19 @@ export const initialWords: WordItem[] = [
 export function lookupDictionary(word: string): Partial<WordItem> {
   const normalized = word.toLowerCase().trim();
   
-  // 1. 本地高频词库快速索引 (Simulating local IndexedDB lookup for top 8k-10k words)
+  // 1. 本地高频词库快速索引
   const found = initialWords.find(w => w.word.toLowerCase() === normalized);
   if (found) return found;
   
-  // 2. 边缘词汇云端兜底 + 本地缓存写入缓存池 (Simulating asynchronous API hit for rare words)
-  // 实际应用场景下，这里将触发一个异步请求，然后在界面显示 Loading。
+  // 2. 默认词条回退
   return {
     word: word,
     phonetic: '/.../',
     partOfSpeech: 'unknown',
-    definition: `[Network Lookup] Definition of ${word}.`,
-    translation: `[云端获取] 单词 ${word} 的释义。在实际应用场景中，此时系统已通过异步 API 拉取边缘词汇，并正在将其写入 IndexedDB。`,
-    example: `(Simulation) ${word} used in a sentence.`,
-    morphology: `[Auto-parsed Tree] Root structure for ${normalized} generated from model.`,
+    definition: `Definition for ${word}.`,
+    translation: `暂未在本词典中找到 ${word} 的详细释义。`,
+    example: `An example sentence using the word ${word}.`,
+    morphology: `No morphological analysis available.`,
   };
 }
 

@@ -3,7 +3,7 @@ import { Lock, User, KeyRound, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface LoginScreenProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (isDeveloper: boolean, username: string) => void;
 }
 
 export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
@@ -16,7 +16,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     e.preventDefault();
     if (username === 'skkaxiaogao' && password === 'administatorskka') {
       setError(false);
-      onLoginSuccess();
+      onLoginSuccess(false, username);
+    } else if (username === 'sword' && password === 'sword') {
+      setError(false);
+      onLoginSuccess(true, username);
+    } else if (username === 'shengzixiang' && password === 'vkgqq') {
+      setError(false);
+      onLoginSuccess(false, username);
     } else {
       setError(true);
     }
@@ -33,8 +39,8 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-100">
             <Lock className="w-7 h-7 text-amber-600" />
           </div>
-          <h2 className="text-2xl font-serif text-stone-800">系统登录</h2>
-          <p className="text-stone-400 text-sm mt-2 font-medium tracking-wide uppercase">Authentication</p>
+          <h2 className="text-2xl font-serif text-stone-800">雅思养成系统</h2>
+          <p className="text-stone-500 text-sm mt-2 tracking-widest font-medium">铸剑计划</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">

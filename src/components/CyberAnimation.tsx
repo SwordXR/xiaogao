@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
 interface CyberAnimationProps {
+  key?: string;
+  username?: string;
   onComplete: () => void;
 }
 
-export default function CyberAnimation({ onComplete }: CyberAnimationProps) {
+export default function CyberAnimation({ username = 'skkaxiaogao', onComplete }: CyberAnimationProps) {
   const [hasWatched, setHasWatched] = useState(false);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function CyberAnimation({ onComplete }: CyberAnimationProps) {
       className="fixed inset-0 z-[9999] bg-white pointer-events-none"
     >
       <iframe 
-        src={`/cyber.html?hasWatched=${hasWatched}`}
+        src={`/cyber.html?hasWatched=${hasWatched}&username=${username}`}
         className="w-full h-full border-none pointer-events-auto"
         title="Cyber Sequence"
         sandbox="allow-scripts allow-same-origin"

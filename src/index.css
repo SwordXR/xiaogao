@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-border-main: var(--border-main);
+}
+
+:root {
+  --bg-app: #FDFBF7;
+  --text-app: #1c1917;
+}
+
+.dark {
+  --bg-app: #1a1a1a;
+  --text-app: #e5e5e5;
+  color-scheme: dark;
+}
